@@ -1,13 +1,71 @@
 const express = require("express");
-const app = express();
+const axios = require("axios");
 
+const app = express();
 app.use(express.json());
 
-app.post("/webhook", (req, res) => {
- console.log("Shopify order:", req.body);
- res.send("Webhook received");
+const SHIPPO_API = "https://api.goshippo.com/shipments/";
+const API_KEY = "ShippoToken YOUR_API_KEY";
+
+app.post("/webhook", async (req, res) => {
+
+ const order = req.body;
+
+ const shipment = {
+   address_from: {
+     name: "Your Shipping Company",
+     street1: "123 Main St",
+     city: "Los Angeles",
+     state: "CA",
+     zip: "90001",
+     country: "US"
+   },
+
+   address_to: {
+     name: order.shipping_address.name,
+     street1: order.shipping_address.address1,
+     city: order.shipping_address.city,
+     state: order.shipping_address.province,
+     zip: order.shipping_address.zip,
+     country: order.shipping_address.country_code
+   },
+
+   parcels: [{
+     length: "10",
+     width: "8",
+     height: "4",
+     distance_unit: "in",
+     weight: "2",
+     mass_unit: "lb"
+   }]
+ };
+
+ try {
+
+   const response = await axios.post(
+     SHIPPO_API,
+     shipment,
+     {
+       headers: {
+         Authorization: API_KEY,
+         "Content-Type": "application/json"
+       }
+     }
+   );
+
+   console.log(response.data);
+
+   res.send("Shipment created");
+
+ } catch (error) {
+
+   console.log(error);
+   res.status(500).send("Error");
+
+ }
+
 });
 
 app.listen(3000, () => {
- console.log("Server running");
+ console.log("Server running on port 3000");
 });
