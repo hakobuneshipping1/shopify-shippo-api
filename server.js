@@ -5,7 +5,7 @@ const app = express();
 app.use(express.json());
 
 const SHIPPO_API = "https://api.goshippo.com/shipments/";
-const API_KEY = "ShippoToken YOUR_API_KEY";
+const API_KEY = "************************************aca6";
 
 app.post("/webhook", async (req, res) => {
 
