@@ -13,13 +13,11 @@ app.get("/", (req, res) => {
   res.send("Shipping API is running");
 });
 
-// Shopify webhook
+// Shippo webhook
 app.post("/shippo-webhook", async (req, res) => {
+
   console.log("Shippo webhook received:");
   console.log(JSON.stringify(req.body, null, 2));
-
-  res.status(200).send("OK");
-});
 
   const order = req.body;
 
@@ -36,12 +34,12 @@ app.post("/shippo-webhook", async (req, res) => {
       },
 
       address_to: {
-        name: order.shipping_address.name,
-        street1: order.shipping_address.address1,
-        city: order.shipping_address.city,
-        state: order.shipping_address.province,
-        zip: order.shipping_address.zip,
-        country: order.shipping_address.country_code
+        name: order.shipping_address?.name || "Customer",
+        street1: order.shipping_address?.address1,
+        city: order.shipping_address?.city,
+        state: order.shipping_address?.province,
+        zip: order.shipping_address?.zip,
+        country: order.shipping_address?.country_code
       },
 
       parcels: [{
