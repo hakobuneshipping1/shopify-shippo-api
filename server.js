@@ -14,7 +14,7 @@ app.get("/", (req, res) => {
 });
 
 // Shopify webhook
-app.post("/shippo-webhook", async (req, res)) => {
+app.post("/shippo-webhook", async (req, res) => {
   console.log("Shippo webhook received:");
   console.log(JSON.stringify(req.body, null, 2));
 
