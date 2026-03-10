@@ -14,7 +14,12 @@ app.get("/", (req, res) => {
 });
 
 // Shopify webhook
-app.post("/webhook", async (req, res) => {
+app.post("/shippo-webhook", (req, res) => {
+  console.log("Shippo webhook received:");
+  console.log(JSON.stringify(req.body, null, 2));
+
+  res.status(200).send("OK");
+});
 
   const order = req.body;
 
@@ -78,5 +83,5 @@ app.post("/webhook", async (req, res) => {
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log("Server running on port " + PORT);
 });
