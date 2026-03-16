@@ -1,78 +1,77 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const Shippo = require("shippo");
-const Stripe = require("stripe");
 const cors = require("cors");
 
 const app = express();
+
 app.use(bodyParser.json());
 app.use(cors());
-app.use(express.static("public"));
 
-const shippo = Shippo("SHIPPO_API_KEY");
-const stripe = Stripe("STRIPE_SECRET_KEY");
+// 🔑 PUT YOUR REAL KEY HERE
+const shippo = Shippo("YOUR_SHIPPO_API_KEY");
 
 
+// ✅ GET SHIPPING RATES
 app.post("/get-rates", async (req, res) => {
 
-const {fromZip,toZip,weight} = req.body;
-
-try{
+try {
 
 const shipment = await shippo.shipment.create({
 
-address_from:{
-zip:fromZip,
-country:"US"
+address_from: {
+zip: req.body.fromZip,
+country: "US"
 },
 
-address_to:{
-zip:toZip,
-country:"US"
+address_to: {
+zip: req.body.toZip,
+country: "US"
 },
 
-parcels:[{
-length:"10",
-width:"10",
-height:"10",
-distance_unit:"in",
-weight:weight,
-mass_unit:"lb"
+parcels: [{
+length: "10",
+width: "10",
+height: "10",
+distance_unit: "in",
+weight: req.body.weight,
+mass_unit: "lb"
 }],
 
-async:false
+async: false
 
 });
 
 res.json(shipment.rates);
 
-}catch(e){
-res.status(500).send(e.message);
+} catch (err) {
+res.status(500).send(err.message);
 }
 
 });
 
 
-app.post("/buy-label", async (req,res)=>{
+// ✅ BUY LABEL
+app.post("/buy-label", async (req, res) => {
 
-const {rate_id} = req.body;
-
-try{
+try {
 
 const transaction = await shippo.transaction.create({
-rate: rate_id,
-label_file_type:"PDF"
+rate: req.body.rate_id,
+label_file_type: "PDF"
 });
 
-res.json(transaction);
+res.json({
+label_url: transaction.label_url
+});
 
-}catch(e){
-res.status(500).send(e.message);
+} catch (err) {
+res.status(500).send(err.message);
 }
 
 });
 
 
-app.listen(3000, ()=>{
+app.listen(3000, () => {
 console.log("Server running on port 3000");
 });
