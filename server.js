@@ -1,85 +1,78 @@
 const express = require("express");
-const axios = require("axios");
+const bodyParser = require("body-parser");
+const Shippo = require("shippo");
+const Stripe = require("stripe");
+const cors = require("cors");
 
 const app = express();
-app.use(express.json());
+app.use(bodyParser.json());
+app.use(cors());
+app.use(express.static("public"));
 
-// Shippo API
-const SHIPPO_API = "https://api.goshippo.com/shipments/";
-const API_KEY = `ShippoToken ${process.env.SHIPPO_API_KEY}`;
+const shippo = Shippo("SHIPPO_API_KEY");
+const stripe = Stripe("STRIPE_SECRET_KEY");
 
-// Test route
-app.get("/", (req, res) => {
-  res.send("Shipping API is running");
-});
 
-// Shippo webhook
-app.post("/shippo-webhook", async (req, res) => {
+app.post("/get-rates", async (req, res) => {
 
-  console.log("Shippo webhook received:");
-  console.log(JSON.stringify(req.body, null, 2));
+const {fromZip,toZip,weight} = req.body;
 
-  const order = req.body;
+try{
 
-  try {
+const shipment = await shippo.shipment.create({
 
-    const shipment = {
-      address_from: {
-        name: "Your Shipping Company",
-        street1: "123 Main St",
-        city: "Los Angeles",
-        state: "CA",
-        zip: "90001",
-        country: "US"
-      },
+address_from:{
+zip:fromZip,
+country:"US"
+},
 
-      address_to: {
-        name: order.shipping_address?.name || "Customer",
-        street1: order.shipping_address?.address1,
-        city: order.shipping_address?.city,
-        state: order.shipping_address?.province,
-        zip: order.shipping_address?.zip,
-        country: order.shipping_address?.country_code
-      },
+address_to:{
+zip:toZip,
+country:"US"
+},
 
-      parcels: [{
-        length: "10",
-        width: "8",
-        height: "4",
-        distance_unit: "in",
-        weight: "2",
-        mass_unit: "lb"
-      }]
-    };
+parcels:[{
+length:"10",
+width:"10",
+height:"10",
+distance_unit:"in",
+weight:weight,
+mass_unit:"lb"
+}],
 
-    const response = await axios.post(
-      SHIPPO_API,
-      shipment,
-      {
-        headers: {
-          Authorization: API_KEY,
-          "Content-Type": "application/json"
-        }
-      }
-    );
-
-    console.log("Shippo response:", response.data);
-
-    res.status(200).send("Shipment created");
-
-  } catch (error) {
-
-    console.error("Shippo error:", error.response?.data || error.message);
-
-    res.status(500).send("Error creating shipment");
-
-  }
+async:false
 
 });
 
-// Render requires this
-const PORT = process.env.PORT || 3000;
+res.json(shipment.rates);
 
-app.listen(PORT, () => {
-  console.log("Server running on port " + PORT);
+}catch(e){
+res.status(500).send(e.message);
+}
+
+});
+
+
+app.post("/buy-label", async (req,res)=>{
+
+const {rate_id} = req.body;
+
+try{
+
+const transaction = await shippo.transaction.create({
+rate: rate_id,
+label_file_type:"PDF"
+});
+
+res.json(transaction);
+
+}catch(e){
+res.status(500).send(e.message);
+}
+
+});
+
+
+app.listen(3000, ()=>{
+console.log("Server running on port 3000");
 });
